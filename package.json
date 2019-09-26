@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "csstats-diff": "cli.js"
+  },
   "scripts": {
     "lint": "github-lint",
     "test": "jest --passWithNoTests"
