@@ -7,9 +7,9 @@
     "lint": "github-lint",
     "test": "jest --passWithNoTests"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["cssstats"],
+  "author": "Shawn Allen",
+  "license": "MIT",
   "dependencies": {
     "cssstats": "^3.4.0",
     "dot-prop": "^5.1.0",
