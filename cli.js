@@ -7,8 +7,12 @@ const getFormat = require('./formats')
 
 const yargs = require('yargs')
   .usage('$0 <before.json | before-url> <after.json | after-url>')
+  .option('f', {
+    alias: 'format',
+    default: 'tsv',
+    describe: 'The output data format'
+  })
 const options = yargs.argv
-const {format = 'tsv'} = options
 const [beforeArg, afterArg] = options._
 
 if (!beforeArg || !afterArg) {
@@ -30,48 +34,33 @@ const keys = [
   'mediaQueries.total'
 ]
 
-Promise.all([
-  readStats(beforeArg),
-  readStats(afterArg)
-]).then(([before, after]) => {
-  const diff = cssstatsDiff(before, after, {keys})
-  const columns = ['key', 'delta', 'before', 'after']
-  const table = getTable({format, columns})
-  const rows = Object.entries(diff).map(([key, value]) => {
-    return columns.map(col => value[col])
+Promise.all([readStats(beforeArg), readStats(afterArg)])
+  .then(([before, after]) => {
+    const diff = cssstatsDiff(before, after, {keys})
+    const columns = ['key', 'delta', 'before', 'after']
+    const table = getTable({format: options.format, columns})
+    const rows = Object.values(diff).map(value => columns.map(col => value[col]))
+    console.log(table.print(rows))
   })
-  console.log(table.print(rows))
-})
-.catch(error => {
-  console.error(error)
-  process.exit(1)
-})
+  .catch(error => {
+    console.error(error)
+    process.exit(1)
+  })
 
 function readStats(arg) {
   if (/^https?:\/\//.test(arg)) {
-    return arg.includes('.json')
-      ? fetch(arg).then(res => res.json())
-      : fetch(arg).then(res => res.text())
+    return arg.includes('.json') ? fetch(arg).then(res => res.json()) : fetch(arg).then(res => res.text())
   } else {
     return readFile(arg, 'utf8')
   }
 }
 
 function getTable({format, columns}) {
-  const {
-    getHeader,
-    getHeaderSeparator, 
-    formatRow,
-    lineDelimiter = '\n'
-  } = getFormat(format, columns)
+  const {getHeader, getHeaderSeparator, formatRow, lineDelimiter = '\n'} = getFormat(format, columns)
 
   return {
     print(rows) {
-      return [
-        getHeader(),
-        getHeaderSeparator(),
-        ...rows.map(formatRow)
-      ].filter(Boolean).join(lineDelimiter)
+      return [getHeader(), getHeaderSeparator(), ...rows.map(formatRow)].filter(Boolean).join(lineDelimiter)
     }
   }
 }
